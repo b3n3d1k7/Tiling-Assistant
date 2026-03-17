@@ -22,7 +22,7 @@ export class TilingWindowManager {
         this._tileStates = new Map();
 
         const assertExistenceFor = window => {
-            window.assertExistence = () => {};
+            window.assertExistence = () => { };
 
             window.connectObject(
                 'unmanaging',
@@ -137,7 +137,7 @@ export class TilingWindowManager {
     static isMaximized(window, workArea = null) {
         const area = workArea ?? window.get_work_area_current_monitor();
         return window.get_maximized() === Meta.MaximizeFlags.BOTH ||
-                window.tiledRect?.equal(area);
+            window.tiledRect?.equal(area);
     }
 
     /**
@@ -254,7 +254,7 @@ export class TilingWindowManager {
             this._updateGappedMaxWindowSignals(window);
             this.saveTileState(window);
 
-        // Tiled window
+            // Tiled window
         } else if (!fakeTile) {
             // Make the tile group only consist of the window itself to stop
             // resizing or raising together. Also don't call the Tiling Popup.
@@ -640,8 +640,8 @@ export class TilingWindowManager {
 
             return [];
 
-        // 'Raise Tile Group' setting is disabled so we get thetop most
-        // non-overlapped/ing tiled windows ignoring the tile groups.
+            // 'Raise Tile Group' setting is disabled so we get thetop most
+            // non-overlapped/ing tiled windows ignoring the tile groups.
         } else {
             return this._getTopTiledWindows({ skipTopWindow, monitor });
         }
@@ -803,10 +803,10 @@ export class TilingWindowManager {
                 return newRect;
             }
 
-        // No currRect was passed, so we just choose the single biggest free rect
-        // and expand it using this function. This is a naive approach and doesn't
-        // guarantee that we get the best combination of free screen rects... but
-        // it should be good enough.
+            // No currRect was passed, so we just choose the single biggest free rect
+            // and expand it using this function. This is a naive approach and doesn't
+            // guarantee that we get the best combination of free screen rects... but
+            // it should be good enough.
         } else {
             const biggestSingle = freeRects.reduce((currBiggest, rect) => {
                 return currBiggest.area >= rect.area ? currBiggest : rect;
@@ -954,34 +954,34 @@ export class TilingWindowManager {
      * @param {Rect} workArea
      * @returns
      */
-    static getDefaultTileFor(shortcut, workArea) {
+    static getDefaultTileFor(shortcut, workArea, factor = 0.5) {
         switch (shortcut) {
             case 'tile-maximize':
                 return workArea.copy();
             case 'tile-left-half':
             case 'tile-left-half-ignore-ta':
-                return workArea.getUnitAt(0, workArea.width / 2, Orientation.V);
+                return workArea.getUnitAt(0, workArea.width * factor, Orientation.V);
             case 'tile-right-half':
             case 'tile-right-half-ignore-ta':
-                return workArea.getUnitAt(1, workArea.width / 2, Orientation.V);
+                return workArea.getUnitAt(1, workArea.width * factor, Orientation.V);
             case 'tile-top-half':
             case 'tile-top-half-ignore-ta':
-                return workArea.getUnitAt(0, workArea.height / 2, Orientation.H);
+                return workArea.getUnitAt(0, workArea.height * factor, Orientation.H);
             case 'tile-bottom-half':
             case 'tile-bottom-half-ignore-ta':
-                return workArea.getUnitAt(1, workArea.height / 2, Orientation.H);
+                return workArea.getUnitAt(1, workArea.height * factor, Orientation.H);
             case 'tile-topleft-quarter':
             case 'tile-topleft-quarter-ignore-ta':
-                return workArea.getUnitAt(0, workArea.width / 2, Orientation.V).getUnitAt(0, workArea.height / 2, Orientation.H);
+                return workArea.getUnitAt(0, workArea.width * factor, Orientation.V).getUnitAt(0, workArea.height * factor, Orientation.H);
             case 'tile-topright-quarter':
             case 'tile-topright-quarter-ignore-ta':
-                return workArea.getUnitAt(1, workArea.width / 2, Orientation.V).getUnitAt(0, workArea.height / 2, Orientation.H);
+                return workArea.getUnitAt(1, workArea.width * factor, Orientation.V).getUnitAt(0, workArea.height * factor, Orientation.H);
             case 'tile-bottomleft-quarter':
             case 'tile-bottomleft-quarter-ignore-ta':
-                return workArea.getUnitAt(0, workArea.width / 2, Orientation.V).getUnitAt(1, workArea.height / 2, Orientation.H);
+                return workArea.getUnitAt(0, workArea.width * factor, Orientation.V).getUnitAt(1, workArea.height * factor, Orientation.H);
             case 'tile-bottomright-quarter':
             case 'tile-bottomright-quarter-ignore-ta':
-                return workArea.getUnitAt(1, workArea.width / 2, Orientation.V).getUnitAt(1, workArea.height / 2, Orientation.H);
+                return workArea.getUnitAt(1, workArea.width * factor, Orientation.V).getUnitAt(1, workArea.height * factor, Orientation.H);
         }
     }
 
@@ -1018,12 +1018,15 @@ export class TilingWindowManager {
      * @param {Meta.Window} window a Meta.Window.
      * @param {Rect} rect the Rect the `window` tiles to or untiles from.
      */
-    static toggleTiling(window, rect, params = {}) {
-        const workArea = window.get_work_area_current_monitor();
-        const equalsWA = rect.equal(workArea);
+    static toggleTiling(window, rect, params = {}, rectSmall = null, rectBig = null) {
         const equalsTile = window.tiledRect && rect.equal(window.tiledRect);
-        if (window.isTiled && equalsTile || this.isMaximized(window) && equalsWA)
-            this.untile(window, params);
+        //const equalsSmallTile = window.tiledRect && rectSmall && rectSmall.equal(window.tiledRect);
+        const equalsBigTile = window.tiledRect && rectBig && rectBig.equal(window.tiledRect);
+
+        if (equalsTile && rectBig)
+            this.tile(window, rectBig, params);
+        else if (equalsBigTile && rectSmall)
+            this.tile(window, rectSmall, params);
         else
             this.tile(window, rect, params);
     }
@@ -1053,7 +1056,7 @@ export class TilingWindowManager {
                 // WindowType.Normal window for their loading screen, which we
                 // don't want to trigger the tiling for.
                 if (createId && openedWindowApp && openedWindowApp === app &&
-                        (window.allows_resize() && window.allows_move() || window.get_maximized())
+                    (window.allows_resize() && window.allows_move() || window.get_maximized())
                 ) {
                     global.display.disconnect(createId);
                     createId = 0;

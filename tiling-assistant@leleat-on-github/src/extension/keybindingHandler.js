@@ -48,7 +48,7 @@ export default class TilingKeybindingHandler {
             }
             return;
 
-        // Toggle the Tiling Popup
+            // Toggle the Tiling Popup
         } else if (shortcutName === 'toggle-tiling-popup') {
             const toggleTo = !Settings.getBoolean('enable-tiling-popup');
             Settings.setBoolean('enable-tiling-popup', toggleTo);
@@ -76,17 +76,17 @@ export default class TilingKeybindingHandler {
                 Twm.toggleTiling(window, tileRect);
             }
 
-        // Tile Editing Mode
+            // Tile Editing Mode
         } else if (shortcutName === 'tile-edit-mode') {
             const TileEditingMode = await import('./tileEditingMode.js');
             const tileEditor = new TileEditingMode.TileEditor();
             tileEditor.open();
 
-        // Toggle always-on-top
+            // Toggle always-on-top
         } else if (shortcutName === 'toggle-always-on-top') {
             window.is_above() ? window.unmake_above() : window.make_above();
 
-        // Toggle maximization vertically
+            // Toggle maximization vertically
         } else if (shortcutName === 'tile-maximize-vertically') {
             const workArea = new Rect(window.get_work_area_current_monitor());
             const currRect = window.tiledRect ?? window.get_frame_rect();
@@ -97,17 +97,17 @@ export default class TilingKeybindingHandler {
                 if (currRect.width === workArea.width) {
                     const tileRect = new Rect(workArea.x, window.untiledRect.y, workArea.width, window.untiledRect.height);
                     Twm.tile(window, tileRect);
-                // Is tiled
+                    // Is tiled
                 } else {
                     Twm.untile(window);
                 }
 
-            // is tiled normally
+                // is tiled normally
             } else if (window.untiledRect) {
                 const tileRect = new Rect(currRect.x, workArea.y, currRect.width, workArea.height);
                 Twm.tile(window, tileRect);
 
-            // is floating
+                // is floating
             } else {
                 const width = Math.min(
                     currRect.width + Settings.getInt('window-gap'),
@@ -122,7 +122,7 @@ export default class TilingKeybindingHandler {
                 Twm.tile(window, tileRect);
             }
 
-        // Toggle maximization horizontally
+            // Toggle maximization horizontally
         } else if (shortcutName === 'tile-maximize-horizontally') {
             const workArea = new Rect(window.get_work_area_current_monitor());
             const currRect = window.tiledRect ?? window.get_frame_rect();
@@ -133,17 +133,17 @@ export default class TilingKeybindingHandler {
                 if (currRect.height === workArea.height) {
                     const tileRect = new Rect(window.untiledRect.x, workArea.y, window.untiledRect.width, workArea.height);
                     Twm.tile(window, tileRect);
-                // Is tiled
+                    // Is tiled
                 } else {
                     Twm.untile(window);
                 }
 
-            // is tiled normally
+                // is tiled normally
             } else if (window.untiledRect) {
                 const tileRect = new Rect(workArea.x, currRect.y, workArea.width, currRect.height);
                 Twm.tile(window, tileRect);
 
-            // is floating
+                // is floating
             } else {
                 const height = Math.min(
                     currRect.height + Settings.getInt('window-gap'),
@@ -158,14 +158,14 @@ export default class TilingKeybindingHandler {
                 Twm.tile(window, tileRect);
             }
 
-        // Restore window size
+            // Restore window size
         } else if (shortcutName === 'restore-window') {
             if (window.untiledRect) // Tiled & maximized with gaps
                 Twm.untile(window, { clampToWorkspace: true });
             else if (window.get_maximized())
                 window.unmaximize(window.get_maximized());
 
-        // Center window
+            // Center window
         } else if (shortcutName === 'center-window') {
             const workArea = new Rect(window.get_work_area_current_monitor());
             if (window.isTiled) {
@@ -201,7 +201,7 @@ export default class TilingKeybindingHandler {
                 );
                 window.move_frame(false, x, y);
             }
-        // Tile a window but ignore T-A features
+            // Tile a window but ignore T-A features
         } else if (['tile-top-half-ignore-ta', 'tile-bottom-half-ignore-ta',
             'tile-left-half-ignore-ta', 'tile-right-half-ignore-ta',
             'tile-topleft-quarter-ignore-ta', 'tile-topright-quarter-ignore-ta',
@@ -210,14 +210,21 @@ export default class TilingKeybindingHandler {
         ) {
             const workArea = new Rect(window.get_work_area_current_monitor());
             const rect = Twm.getDefaultTileFor(shortcutName, workArea);
-            Twm.toggleTiling(window, rect, { ignoreTA: true });
-        // Tile a window
+            const rectSmall = Twm.getDefaultTileFor(shortcutName, workArea, 0.25);
+            const rectBig = Twm.getDefaultTileFor(shortcutName, workArea, 0.75);
+            Twm.toggleTiling(window, rect, { ignoreTA: true }, rectSmall, rectBig);
+            // Tile a window
         } else {
             const dynamicSetting = Settings.getInt('dynamic-keybinding-behavior');
             const windowsStyle = DynamicKeybindings.TILING_STATE_WINDOWS;
             const isWindowsStyle = dynamicSetting === windowsStyle;
             const workArea = new Rect(window.get_work_area_current_monitor());
-            const rect = Twm.getTileFor(shortcutName, workArea, window.get_monitor());
+
+            // Note: this only works because i dont use tile groups
+            // Could just enable advanced settings and set the shortcuts, but I'm lazy :-P
+            const rect = Twm.getDefaultTileFor(shortcutName, workArea);
+            const rectSmall = Twm.getDefaultTileFor(shortcutName, workArea, 0.25);
+            const rectBig = Twm.getDefaultTileFor(shortcutName, workArea, 0.75);
 
             switch (dynamicSetting) {
                 case DynamicKeybindings.FOCUS:
@@ -231,7 +238,7 @@ export default class TilingKeybindingHandler {
                     this._dynamicFavoriteLayout(window, shortcutName);
                     break;
                 default:
-                    Twm.toggleTiling(window, rect);
+                    Twm.toggleTiling(window, rect, {}, rectSmall, rectBig);
             }
         }
     }
@@ -357,7 +364,7 @@ export default class TilingKeybindingHandler {
                         window.minimize();
                         break;
                     }
-                // falls through
+                    // falls through
                 } default: {
                     const rect = Twm.getTileFor(shortcutName, workArea, window.get_monitor());
                     Twm.toggleTiling(window, rect);

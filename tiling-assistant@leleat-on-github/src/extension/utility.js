@@ -48,23 +48,23 @@ export class Util {
         switch (direction) {
             case Direction.N:
                 return keyVal === Clutter.KEY_Up ||
-                        keyVal === Clutter.KEY_w || keyVal === Clutter.KEY_W ||
-                        keyVal === Clutter.KEY_k || keyVal === Clutter.KEY_K;
+                    keyVal === Clutter.KEY_w || keyVal === Clutter.KEY_W ||
+                    keyVal === Clutter.KEY_k || keyVal === Clutter.KEY_K;
 
             case Direction.S:
                 return keyVal === Clutter.KEY_Down ||
-                        keyVal === Clutter.KEY_s || keyVal === Clutter.KEY_S ||
-                        keyVal === Clutter.KEY_j || keyVal === Clutter.KEY_J;
+                    keyVal === Clutter.KEY_s || keyVal === Clutter.KEY_S ||
+                    keyVal === Clutter.KEY_j || keyVal === Clutter.KEY_J;
 
             case Direction.W:
                 return keyVal === Clutter.KEY_Left ||
-                        keyVal === Clutter.KEY_a || keyVal === Clutter.KEY_A ||
-                        keyVal === Clutter.KEY_h || keyVal === Clutter.KEY_H;
+                    keyVal === Clutter.KEY_a || keyVal === Clutter.KEY_A ||
+                    keyVal === Clutter.KEY_h || keyVal === Clutter.KEY_H;
 
             case Direction.E:
                 return keyVal === Clutter.KEY_Right ||
-                        keyVal === Clutter.KEY_d || keyVal === Clutter.KEY_D ||
-                        keyVal === Clutter.KEY_l || keyVal === Clutter.KEY_L;
+                    keyVal === Clutter.KEY_d || keyVal === Clutter.KEY_D ||
+                    keyVal === Clutter.KEY_l || keyVal === Clutter.KEY_L;
         }
 
         return false;
@@ -316,22 +316,22 @@ export class Rect {
         // Prefer individual gaps
         if (Util.useIndividualGaps(monitor)) {
             [['x', 'width', screenLeftGap, screenRightGap],
-                ['y', 'height', screenTopGap, screenBottomGap]]
-            .forEach(([pos, dim, posGap, dimGap]) => {
-                if (this[pos] === workArea[pos]) {
-                    r[pos] = this[pos] + posGap;
-                    r[dim] -= posGap;
-                } else {
-                    r[pos] = this[pos] + windowGap / 2;
-                    r[dim] -= windowGap / 2;
-                }
+            ['y', 'height', screenTopGap, screenBottomGap]]
+                .forEach(([pos, dim, posGap, dimGap]) => {
+                    if (this[pos] === workArea[pos]) {
+                        r[pos] = this[pos] + posGap;
+                        r[dim] -= posGap;
+                    } else {
+                        r[pos] = this[pos] + windowGap / 2;
+                        r[dim] -= windowGap / 2;
+                    }
 
-                if (this[pos] + this[dim] === workArea[pos] + workArea[dim])
-                    r[dim] -= dimGap;
-                else
-                    r[dim] -= windowGap / 2;
-            });
-        // Use the single screen gap
+                    if (this[pos] + this[dim] === workArea[pos] + workArea[dim])
+                        r[dim] -= dimGap;
+                    else
+                        r[dim] -= windowGap / 2;
+                });
+            // Use the single screen gap
         } else {
             [['x', 'width'], ['y', 'height']].forEach(([pos, dim]) => {
                 if (this[pos] === workArea[pos]) {
@@ -378,7 +378,7 @@ export class Rect {
      */
     containsPoint(point) {
         return point.x >= this.x && point.x <= this.x2 &&
-                point.y >= this.y && point.y <= this.y2;
+            point.y >= this.y && point.y <= this.y2;
     }
 
     /**
@@ -481,7 +481,7 @@ export class Rect {
         const neighbors = posMap.get(neighborPos ?? sortedPoses[0]);
         return neighbors.reduce((currNearest, rect) => {
             return Math.abs(currNearest[nonCmprProp] - this[nonCmprProp]) <=
-                    Math.abs(rect[nonCmprProp] - this[nonCmprProp])
+                Math.abs(rect[nonCmprProp] - this[nonCmprProp])
                 ? currNearest
                 : rect;
         });
@@ -504,39 +504,15 @@ export class Rect {
      */
     getUnitAt(index, unitSize, orientation) {
         unitSize = Math.floor(unitSize);
-
         const isVertical = orientation === Orientation.V;
-        const lastIndex = Math.round(this[isVertical ? 'width' : 'height'] / unitSize) - 1;
-
-        const getLastRect = () => {
-            const margin = unitSize * index;
-            return new Rect(
-                isVertical ? this.x + margin : this.x,
-                isVertical ? this.y : this.y + margin,
-                isVertical ? this.width - margin : this.width,
-                isVertical ? this.height : this.height - margin
-            );
-        };
-        const getNonLastRect = (remainingRect, idx) => {
-            const firstUnitRect = new Rect(
-                remainingRect.x,
-                remainingRect.y,
-                isVertical ? unitSize : remainingRect.width,
-                isVertical ? remainingRect.height : unitSize
-            );
-
-            if (idx <= 0) {
-                return firstUnitRect;
-            } else {
-                const remaining = remainingRect.minus(firstUnitRect)[0];
-                return getNonLastRect(remaining, idx - 1);
-            }
-        };
-
-        if (index === lastIndex)
-            return getLastRect();
-        else
-            return getNonLastRect(this, index);
+        const verticalMargin = (this.width - unitSize) * index;
+        const horizontalMargin = (this.height - unitSize) * index;
+        return new Rect(
+            isVertical ? this.x + verticalMargin : this.x,
+            isVertical ? this.y : this.y + horizontalMargin,
+            isVertical ? unitSize : this.width,
+            isVertical ? this.height : unitSize
+        );
     }
 
     /**
